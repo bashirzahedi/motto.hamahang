@@ -1,0 +1,116 @@
+{
+  "tabs": {
+    "slogan": "Slogan",
+    "slogans_list": "Slogans",
+    "more": "More"
+  },
+  "home": {
+    "title": "Hamahang",
+    "subtitle": "United voices",
+    "loading_error": "Loading error",
+    "offline": "No internet connection",
+    "offline_hint": "Please check your connection and try again",
+    "retry": "Retry",
+    "no_slogans": "No slogans added yet"
+  },
+  "slogan": {
+    "repeat": "Repeat",
+    "seconds": "seconds"
+  },
+  "nearby": {
+    "unavailable": "Crowd counting not available",
+    "starting": "Detecting nearby people...",
+    "location_off": "Please turn on location (GPS)",
+    "error": "Crowd counting error",
+    "people_nearby": "~{{value}} people nearby",
+    "searching": "Searching for nearby people...",
+    "ble_unavailable": "Bluetooth not available",
+    "ble_unavailable_hint": "This feature only works on a physical device",
+    "ble_error": "Bluetooth error",
+    "ble_error_hint": "Please turn on Bluetooth and try again",
+    "ble_connecting": "Connecting...",
+    "no_one_nearby": "No one nearby yet",
+    "no_one_nearby_hint": "When someone is nearby, you can chat with them"
+  },
+  "city": {
+    "header": "City crowd stats",
+    "people": "people"
+  },
+  "more": {
+    "title": "Hamahang",
+    "subtitle": "United voices",
+    "slogans_list": "Slogans list",
+    "slogans_list_desc": "View active slogans",
+    "suggest_slogan": "Suggest a slogan",
+    "suggest_slogan_desc": "Suggest a new slogan",
+    "about": "About",
+    "about_desc": "About Hamahang",
+    "privacy": "Privacy Policy",
+    "privacy_desc": "How we handle your data",
+    "language": "Language",
+    "version": "Beta version 1.0.0"
+  },
+  "slangs": {
+    "title": "Slogans list",
+    "check_first": "Vote for slogans you like! Slogans with positive votes become active.",
+    "active_count": "{{count}} active slogans",
+    "repeat": "repeats",
+    "seconds": "seconds",
+    "empty": "No slogans added yet",
+    "inactive": "Inactive",
+    "needs_votes": "Needs votes",
+    "sort_active": "Selected",
+    "sort_newest": "Newest",
+    "sort_most_votes": "Most votes"
+  },
+  "suggest": {
+    "title": "Suggest a slogan",
+    "description": "Submit your slogan suggestion to be added to the list",
+    "text_label": "Slogan text",
+    "text_placeholder": "e.g. Freedom, Freedom, Freedom",
+    "repeat_label": "Repeat count (1-10)",
+    "repeat_hint": "How many times this slogan repeats",
+    "seconds_label": "Seconds per repeat (2-15)",
+    "seconds_hint": "Seconds between each repeat",
+    "preview_label": "Time preview:",
+    "preview_text": "This slogan will be shown for {{seconds}} seconds",
+    "submit": "Submit suggestion",
+    "success_title": "Your slogan was added",
+    "success_text": "Thank you for your contribution. Your slogan has been added and will become active when it receives positive votes.",
+    "suggest_another": "Suggest another slogan",
+    "rate_limit_title": "Rate limit",
+    "rate_limit_text": "You've submitted several suggestions recently. Please wait a moment.",
+    "error": "Error",
+    "error_empty": "Please enter the slogan text",
+    "error_repeat_range": "Repeat count must be between 1 and 10",
+    "error_seconds_range": "Duration per repeat must be between 2 and 15 seconds",
+    "error_submit": "There was a problem submitting your suggestion. Please try again."
+  },
+  "about": {
+    "title": "About",
+    "no_content": "No content available"
+  },
+  "pro": {
+    "title": "Support Hamahang",
+    "description": "Hamahang is free and always will be. Buy Pro to support development — no extra features, just your support.",
+    "buy": "Buy Pro",
+    "restore": "Restore purchase",
+    "thanks_title": "Pro Supporter",
+    "thanks_subtitle": "Thank you for supporting Hamahang!",
+    "error_title": "Error",
+    "error_not_ready": "Purchase service is not ready yet. Please wait a moment.",
+    "error_no_package": "No product found. Please try again later."
+  },
+  "language": {
+    "switching": "Changing language..."
+  },
+  "pwa": {
+    "install_title": "Install Hamahang",
+    "install_subtitle": "Add Hamahang to your home screen",
+    "install_button": "Install App",
+    "ios_step1": "To install Hamahang:",
+    "ios_step2": "Tap the Share button",
+    "ios_step3": "Select \"Add to Home Screen\"",
+    "ios_open_safari": "To install, open this page in Safari"
+  }
+}

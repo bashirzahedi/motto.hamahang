@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Hamahang",
+    "slug": "hamahang",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "hamahang",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "name": "همآهنگ | Hamahang",
+      "shortName": "همآهنگ",
+      "description": "همآهنگ - با هم یکصدا",
+      "lang": "fa",
+      "themeColor": "#000000",
+      "backgroundColor": "#000000"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Vazirmatn-Regular.ttf",
+            "./assets/fonts/Vazirmatn-Bold.ttf"
+          ]
+        }
+      ],
+      "expo-localization"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    },
+    "owner": "hamahang"
+  }
+}

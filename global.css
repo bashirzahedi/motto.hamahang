@@ -1,0 +1,55 @@
+/* Default system font for the entire app */
+* {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+html, body, #root, #__next {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #09090b !important;
+  color: #fafafa;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Override React Native Web default backgrounds */
+[data-rnw-root], [data-rnweb], div[style*="background-color: rgb(242, 242, 242)"] {
+  background-color: #09090b !important;
+}
+
+/* Dark scrollbar for admin panel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #27272a #09090b;
+}
+
+/* Tab bar label fix for mobile web */
+[role="tablist"] [role="tab"] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* English mode: include icon font families so icon glyphs (PUA codepoints) still render correctly. */
+html[lang="en"] * {
+  font-family: 'Ionicons', 'MaterialIcons', 'Material Design Icons', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+html[lang="en"] [role="tablist"] [role="tab"] {
+  font-family: 'Ionicons', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
