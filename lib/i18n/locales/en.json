@@ -1,11 +1,11 @@
 {
   "tabs": {
-    "slogan": "Slogan",
-    "slogans_list": "Slogans",
+    "slogan": "Live Slogan",
+    "slogans_list": "Slogans List",
     "more": "More"
   },
   "home": {
-    "title": "Hamahang",
+    "title": "Hamahang Mottos",
     "subtitle": "United voices",
     "loading_error": "Loading error",
     "offline": "No internet connection",
@@ -37,7 +37,7 @@
     "people": "people"
   },
   "more": {
-    "title": "Hamahang",
+    "title": "Hamahang Mottos",
     "subtitle": "United voices",
     "slogans_list": "Slogans list",
     "slogans_list_desc": "View active slogans",
@@ -48,7 +48,7 @@
     "privacy": "Privacy Policy",
     "privacy_desc": "How we handle your data",
     "language": "Language",
-    "version": "Beta version 1.0.0"
+    "version": "Version 1.0.0"
   },
   "slangs": {
     "title": "Slogans list",
@@ -105,8 +105,8 @@
     "switching": "Changing language..."
   },
   "pwa": {
-    "install_title": "Install Hamahang",
-    "install_subtitle": "Add Hamahang to your home screen",
+    "install_title": "Install Hamahang Mottos",
+    "install_subtitle": "Add Hamahang Mottos to your home screen",
     "install_button": "Install App",
     "ios_step1": "To install Hamahang:",
     "ios_step2": "Tap the Share button",

@@ -1,163 +1,271 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
+  RefreshControl,
+  Pressable,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { useSyncedSlogan } from '../../hooks/useSyncedSlogan';
-import { useCityPeaks } from '../../hooks/useCityPeaks';
+import { GlassCard } from '../../components/ui/GlassCard';
+import { SkeletonCard } from '../../components/ui/SkeletonLoader';
+import { supabase, type Slang, type Notice } from '../../lib/supabase';
 import { useSloganVote } from '../../hooks/useSloganVote';
 import { useAppSettings } from '../../hooks/useAppSettings';
-import { usePresence } from '../../hooks/usePresence';
-import { LocationService } from '../../lib/location';
-import { SloganDisplay } from '../../components/SloganDisplay';
-import { CrowdInfo } from '../../components/CrowdInfo';
-import { GlassCard } from '../../components/ui/GlassCard';
-import { GradientButton } from '../../components/ui/GradientButton';
-import { SkeletonLoader, SkeletonCard } from '../../components/ui/SkeletonLoader';
-import { colors, fonts, spacing } from '../../lib/theme';
+import i18n from '../../lib/i18n';
+import { colors, accent, fonts, spacing, glass, radius, rtlTextAlign, isRTL } from '../../lib/theme';
 
-export default function SloganHomeScreen() {
+export default function SlangsListScreen() {
   const { t } = useTranslation();
-  const { state, isLoading, error, refetch } = useSyncedSlogan();
-  const cityPeaks = useCityPeaks();
+  const [slangs, setSlangs] = useState<Slang[]>([]);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [sortBy, setSortBy] = useState<'active' | 'newest' | 'most_votes'>('active');
   const { votes, vote } = useSloganVote();
   const { votingEnabled } = useAppSettings();
-  usePresence();
 
-  // Track user's own city for filtering
-  const [myCity, setMyCity] = useState<string | null>(null);
+  const fetchNotice = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notices')
+        .select('*')
+        .eq('is_visible', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      setNotice(data);
+    } catch (error) {
+      console.error('Error fetching notice:', error);
+    }
+  };
+
+  const fetchSlangs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('slangs')
+        .select('*')
+        .order('vote_score', { ascending: false });
+      if (error) throw error;
+      setSlangs(data || []);
+    } catch (error) {
+      console.error('Error fetching slangs:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
-    const check = () => {
-      const city = LocationService.getInstance().getCity();
-      setMyCity(city);
-      if (city && timer) {
-        // City detected — no need to keep polling
-        clearInterval(timer);
-      }
+    fetchSlangs();
+    fetchNotice();
+
+    const slangsSub = supabase
+      .channel('slangs-list-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'slangs' },
+        () => { fetchSlangs(); },
+      )
+      .subscribe();
+
+    const noticesSub = supabase
+      .channel('notices-list-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notices' },
+        () => { fetchNotice(); },
+      )
+      .subscribe();
+
+    return () => {
+      slangsSub.unsubscribe();
+      noticesSub.unsubscribe();
     };
-    check();
-    // Poll at 500ms until city is detected
-    timer = setInterval(check, 500);
-    return () => clearInterval(timer);
   }, []);
 
-  // Show only the user's own city
-  const myPeaks = useMemo(
-    () => myCity ? cityPeaks.peaks.filter(p => p.city === myCity) : [],
-    [cityPeaks.peaks, myCity],
-  );
+  const getNetVotes = useCallback((id: string) => {
+    const v = votes.get(id);
+    return (v?.likes ?? 0) - (v?.dislikes ?? 0);
+  }, [votes]);
 
-  // Sticky state: keep last valid slogan even if hook temporarily returns null
-  const stickyStateRef = useRef(state);
-  if (state) stickyStateRef.current = state;
-  const displayState = stickyStateRef.current;
+  const getIsActive = useCallback((id: string, slang: Slang) => {
+    if (slang.admin_override) return slang.is_active;
+    const v = votes.get(id);
+    const likes = v?.likes ?? 0;
+    const dislikes = v?.dislikes ?? 0;
+    const hasVotes = likes > 0 || dislikes > 0;
+    return hasVotes ? (likes - dislikes) >= 0 : slang.is_active;
+  }, [votes]);
 
-  // Sticky offline: once detected, stay for 5 seconds minimum
-  const [isOffline, setIsOffline] = useState(false);
-  const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (error) {
-      if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
-      offlineTimerRef.current = null;
-      setIsOffline(true);
-    } else {
-      offlineTimerRef.current = setTimeout(() => setIsOffline(false), 5000);
+  const sortedSlangs = useMemo(() => {
+    const sorted = [...slangs];
+    switch (sortBy) {
+      case 'active':
+        sorted.sort((a, b) => {
+          const aActive = getIsActive(a.id, a) ? 1 : 0;
+          const bActive = getIsActive(b.id, b) ? 1 : 0;
+          return bActive - aActive || getNetVotes(b.id) - getNetVotes(a.id);
+        });
+        break;
+      case 'newest':
+        sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      case 'most_votes':
+        sorted.sort((a, b) => getNetVotes(b.id) - getNetVotes(a.id));
+        break;
     }
-    return () => { if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current); };
-  }, [error]);
+    return sorted;
+  }, [slangs, sortBy, votes, getNetVotes, getIsActive]);
 
-  if (isLoading) {
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchSlangs();
+    fetchNotice();
+  }, []);
+
+  const renderSlang = ({ item, index }: { item: Slang; index: number }) => {
+    const voteInfo = votes.get(item.id);
+    const likes = voteInfo?.likes ?? 0;
+    const dislikes = voteInfo?.dislikes ?? 0;
+    const userVote = voteInfo?.userVote ?? null;
+    // Use actual vote counts as source of truth (cached vote_score can be stale)
+    const hasAnyVotes = likes > 0 || dislikes > 0;
+    const netVotes = likes - dislikes;
+    // Admin override → use DB; otherwise votes decide (fallback to DB if no votes)
+    const isActive = item.admin_override ? item.is_active : (hasAnyVotes ? netVotes >= 0 : item.is_active);
+
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <Animated.View entering={FadeInUp.duration(300).delay(index * 50)}>
+        <GlassCard style={{ marginBottom: spacing.md, opacity: isActive ? 1 : 0.5 }}>
+          <Text style={[styles.slangText, !isActive && styles.inactiveText]}>{item.text}</Text>
+          <View style={styles.slangFooter}>
+            <View style={styles.slangMeta}>
+              <View style={styles.metaBadge}>
+                <Text style={styles.metaBadgeText}>{item.repeat_count} {t('slangs.repeat')}</Text>
+              </View>
+              <View style={styles.metaBadge}>
+                <Text style={styles.metaBadgeText}>{item.seconds_per} {t('slangs.seconds')}</Text>
+              </View>
+            </View>
+            {votingEnabled && (
+              <View style={styles.votePill}>
+                <TouchableOpacity
+                  onPress={() => vote(item.id, 1)}
+                  style={[styles.voteButton, userVote === 1 && styles.voteButtonActive]}
+                >
+                  <Ionicons
+                    name={userVote === 1 ? 'thumbs-up' : 'thumbs-up-outline'}
+                    size={16}
+                    color={userVote === 1 ? accent.primary : colors.textDim}
+                  />
+                </TouchableOpacity>
+                <Text style={[styles.voteCount, styles.voteCountPositive]}>
+                  {likes}
+                </Text>
+                <View style={styles.voteDivider} />
+                <Text style={[styles.voteCount, styles.voteCountNegative]}>
+                  {dislikes}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => vote(item.id, -1)}
+                  style={[styles.voteButton, userVote === -1 && styles.voteButtonActive]}
+                >
+                  <Ionicons
+                    name={userVote === -1 ? 'thumbs-down' : 'thumbs-down-outline'}
+                    size={16}
+                    color={userVote === -1 ? colors.destructiveText : colors.textDim}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </GlassCard>
+      </Animated.View>
+    );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
         <LinearGradient
-          colors={['rgba(139, 92, 246, 0.08)', 'transparent']}
+          colors={['rgba(139, 92, 246, 0.06)', 'transparent']}
           style={StyleSheet.absoluteFill}
         />
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>{t('slangs.title')}</Text>
+        </View>
         <View style={styles.loadingContent}>
-          <SkeletonLoader width={200} height={28} style={{ marginBottom: 24 }} />
-          <SkeletonLoader width={100} height={80} borderRadius={14} style={{ marginBottom: 16 }} />
-          <SkeletonLoader width="70%" height={6} style={{ marginBottom: 32 }} />
-          <SkeletonCard style={{ width: '90%' }} />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </View>
       </SafeAreaView>
     );
   }
 
+  const ListHeader = () => (
+    <View>
+      {notice?.text ? (
+        <Animated.View entering={FadeIn.duration(400)}>
+          <GlassCard strong style={{ marginBottom: spacing.lg }}>
+            <Text style={styles.noticeText}>{i18n.language === 'en' && notice.text_en ? notice.text_en : notice.text}</Text>
+          </GlassCard>
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['rgba(139, 92, 246, 0.08)', 'transparent']}
+        colors={['rgba(139, 92, 246, 0.06)', 'transparent']}
         style={StyleSheet.absoluteFill}
       />
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>{t('slangs.title')}</Text>
+      </View>
 
-      <Animated.View entering={FadeInUp.duration(500)} style={styles.header}>
-        <Text style={styles.title}>{t('home.title')}</Text>
-        <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
-      </Animated.View>
+      <Text style={styles.subtitle}>
+        {t('slangs.check_first')}
+      </Text>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View entering={FadeInUp.duration(500).delay(100)} style={styles.crowdInfoContainer}>
-          <CrowdInfo
-            peaks={myPeaks}
-            peaksLoading={cityPeaks.isLoading}
-          />
-        </Animated.View>
+      <View style={styles.sortRow}>
+        {(['most_votes', 'active', 'newest'] as const).map((key) => (
+          <Pressable
+            key={key}
+            onPress={() => setSortBy(key)}
+            style={[styles.sortChip, sortBy === key && styles.sortChipActive]}
+          >
+            <Text style={[styles.sortChipText, sortBy === key && styles.sortChipTextActive]}>
+              {t(`slangs.sort_${key}`)}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
 
-        {isOffline && !displayState && (
-          <Animated.View entering={FadeIn.duration(400)} style={styles.offlineBanner}>
-            <GlassCard strong>
-              <View style={styles.offlineBannerContent}>
-                <Ionicons
-                  name="cloud-offline-outline"
-                  size={32}
-                  color={colors.textDim}
-                />
-                <View style={styles.offlineBannerText}>
-                  <Text style={styles.errorTitle}>{t('home.offline')}</Text>
-                  <Text style={styles.errorDetail}>{t('home.offline_hint')}</Text>
-                </View>
-              </View>
-              <View style={{ marginTop: 12 }}>
-                <GradientButton title={t('home.retry')} onPress={refetch} />
-              </View>
-            </GlassCard>
-          </Animated.View>
-        )}
-
-        {displayState ? (
-          <Animated.View entering={FadeInUp.duration(500).delay(200)} style={styles.sloganContainer}>
-            {isOffline && (
-              <View style={styles.offlineDotRow}>
-                <View style={styles.offlineDot} />
-                <Text style={styles.offlineDotText}>{t('home.offline')}</Text>
-              </View>
-            )}
-            <SloganDisplay
-              state={displayState}
-              voteScore={votes.get(displayState.slang.id)?.score ?? 0}
-              userVote={votes.get(displayState.slang.id)?.userVote ?? null}
-              onVote={votingEnabled ? vote : undefined}
-            />
-          </Animated.View>
-        ) : !isOffline ? (
+      <FlatList
+        data={sortedSlangs}
+        renderItem={renderSlang}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={ListHeader}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ffffff" />
+        }
+        ListEmptyComponent={
           <Animated.View entering={FadeIn.duration(400)} style={styles.emptyContainer}>
-            <GlassCard>
-              <Text style={styles.emptyText}>{t('home.no_slogans')}</Text>
-            </GlassCard>
+            <Text style={styles.emptyText}>{t('slangs.empty')}</Text>
           </Animated.View>
-        ) : null}
-      </ScrollView>
+        }
+      />
     </SafeAreaView>
   );
 }
@@ -168,94 +276,149 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   loadingContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    padding: spacing.lg,
   },
-  header: {
+  headerRow: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
-    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: glass.border,
   },
-  title: {
-    fontSize: 28,
+  headerTitle: {
+    fontSize: fonts.sizes.lg,
     color: colors.text,
     fontFamily: fonts.familyBold,
   },
   subtitle: {
     fontSize: fonts.sizes.sm,
     color: colors.textDim,
+    textAlign: 'center',
     fontFamily: fonts.family,
-    marginTop: 2,
-  },
-  scrollContent: {
-    flexGrow: 1,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
   },
-  crowdInfoContainer: {
-    marginBottom: spacing.xs,
+  sortRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
   },
-  sloganContainer: {
-    flex: 1,
+  sortChip: {
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.full,
+    backgroundColor: glass.bg,
+    borderWidth: 1,
+    borderColor: glass.border,
   },
-  offlineBanner: {
-    marginBottom: spacing.lg,
+  sortChipActive: {
+    backgroundColor: accent.primary,
+    borderColor: accent.primary,
   },
-  offlineBannerContent: {
+  sortChipText: {
+    fontSize: fonts.sizes.xs,
+    fontFamily: fonts.family,
+    color: colors.textDim,
+  },
+  sortChipTextActive: {
+    color: '#fff',
+    fontFamily: fonts.familyBold,
+  },
+  listContent: {
+    padding: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  slangText: {
+    fontSize: fonts.sizes.md,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: rtlTextAlign,
+    lineHeight: 26,
+    fontFamily: fonts.family,
+    marginBottom: spacing.sm,
+  },
+  slangMeta: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+  },
+  metaBadge: {
+    backgroundColor: glass.bg,
+    borderRadius: radius.sm,
+    paddingVertical: 3,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderColor: glass.border,
+  },
+  metaBadgeText: {
+    color: colors.textMuted,
+    fontSize: fonts.sizes.xs,
+    fontFamily: fonts.family,
+  },
+  slangFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  votePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    backgroundColor: glass.bg,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: glass.border,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    gap: 2,
   },
-  offlineBannerText: {
-    flex: 1,
+  voteButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: radius.full,
+  },
+  voteButtonActive: {
+    backgroundColor: glass.bgStrong,
+  },
+  voteCount: {
+    fontSize: fonts.sizes.xs,
+    fontFamily: fonts.family,
+    minWidth: 16,
+    textAlign: 'center',
+  },
+  voteCountPositive: {
+    color: accent.primary,
+  },
+  voteCountNegative: {
+    color: colors.destructiveText,
+  },
+  voteDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: glass.border,
+  },
+  noticeText: {
+    fontSize: fonts.sizes.sm,
+    color: colors.textMuted,
+    textAlign: rtlTextAlign,
+    lineHeight: 26,
+    fontFamily: fonts.family,
   },
   emptyContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 60,
   },
-  errorTitle: {
-    color: colors.text,
-    fontSize: fonts.sizes.lg,
-    fontWeight: '600',
-    fontFamily: fonts.family,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  errorDetail: {
-    color: colors.textDim,
-    fontSize: fonts.sizes.sm,
-    fontFamily: fonts.family,
-    textAlign: 'center',
-  },
   emptyText: {
     color: colors.textDim,
-    fontSize: fonts.sizes.lg,
+    fontSize: fonts.sizes.md,
     fontFamily: fonts.family,
-    textAlign: 'center',
   },
-  offlineDotRow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    zIndex: 1,
-  },
-  offlineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ef4444',
-  },
-  offlineDotText: {
-    color: colors.textMuted,
-    fontSize: fonts.sizes.xs,
-    fontFamily: fonts.family,
+  inactiveText: {
+    color: colors.textDim,
   },
 });

@@ -4,32 +4,32 @@ const path = require('path');
 const indexPath = path.join(__dirname, '../dist/index.html');
 
 const metaTags = `
-    <meta name="title" content="همآهنگ | Hamahang" />
+    <meta name="title" content="شعارهای همآهنگ | Hamahang Mottos" />
     <meta name="keywords" content="همآهنگ, hamahang, ایران, شعار, iran" />
     <meta name="author" content="Hamahang" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.hamahang.org/" />
-    <meta property="og:title" content="همآهنگ | Hamahang" />
-    <meta property="og:description" content="همآهنگ - با هم یکصدا" />
+    <meta property="og:title" content="شعارهای همآهنگ | Hamahang Mottos" />
+    <meta property="og:description" content="شعارهای همآهنگ - با هم یکصدا" />
     <meta property="og:image" content="https://www.hamahang.org/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="fa_IR" />
-    <meta property="og:site_name" content="همآهنگ" />
+    <meta property="og:site_name" content="شعارهای همآهنگ" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://www.hamahang.org/" />
-    <meta name="twitter:title" content="همآهنگ | Hamahang" />
-    <meta name="twitter:description" content="همآهنگ - با هم یکصدا" />
+    <meta name="twitter:title" content="شعارهای همآهنگ | Hamahang Mottos" />
+    <meta name="twitter:description" content="شعارهای همآهنگ - با هم یکصدا" />
     <meta name="twitter:image" content="https://www.hamahang.org/og-image.png" />
 
     <!-- Apple -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="همآهنگ" />
+    <meta name="apple-mobile-web-app-title" content="شعارهای همآهنگ" />
     <link rel="apple-touch-icon" href="/icon.png" />
 
     <!-- PWA -->

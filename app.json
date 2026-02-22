@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Hamahang",
+    "name": "شعارهای همآهنگ",
     "slug": "hamahang",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,14 +11,14 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#6400B2"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
-      "name": "همآهنگ | Hamahang",
-      "shortName": "همآهنگ",
-      "description": "همآهنگ - با هم یکصدا",
+      "name": "شعارهای همآهنگ | Hamahang Mottos",
+      "shortName": "شعارهای همآهنگ",
+      "description": "شعارهای همآهنگ - با هم یکصدا",
       "lang": "fa",
       "themeColor": "#000000",
       "backgroundColor": "#000000"

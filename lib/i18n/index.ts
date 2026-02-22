@@ -13,7 +13,7 @@ export async function getStoredLanguage(): Promise<AppLanguage> {
     const stored = await AsyncStorage.getItem(LANGUAGE_KEY);
     if (stored === 'en' || stored === 'fa') return stored;
   } catch {}
-  return 'en';
+  return 'fa';
 }
 
 export async function setStoredLanguage(lang: AppLanguage): Promise<void> {
@@ -27,7 +27,7 @@ export async function initI18n(): Promise<void> {
 
   await i18n.use(initReactI18next).init({
     lng,
-    fallbackLng: 'en',
+    fallbackLng: 'fa',
     resources: {
       fa: { translation: fa },
       en: { translation: en },

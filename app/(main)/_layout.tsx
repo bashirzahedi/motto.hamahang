@@ -16,18 +16,18 @@ export default function MainLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: t('tabs.slogan'),
+          title: t('tabs.slogans_list'),
           tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'megaphone' : 'megaphone-outline'} focused={focused} />
+            <TabIcon name={focused ? 'list' : 'list-outline'} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
         name="slangs"
         options={{
-          title: t('tabs.slogans_list'),
+          title: t('tabs.slogan'),
           tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'list' : 'list-outline'} focused={focused} />
+            <TabIcon name={focused ? 'megaphone' : 'megaphone-outline'} focused={focused} />
           ),
         }}
       />

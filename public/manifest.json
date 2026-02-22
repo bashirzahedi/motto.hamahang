@@ -1,7 +1,7 @@
 {
-  "name": "Hamahang",
-  "short_name": "Hamahang",
-  "description": "همآهنگ - با هم یکصدا",
+  "name": "شعارهای همآهنگ | Hamahang Mottos",
+  "short_name": "شعارهای همآهنگ",
+  "description": "شعارهای همآهنگ - با هم یکصدا",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
